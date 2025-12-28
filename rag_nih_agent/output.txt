@@ -1,0 +1,750 @@
+ML-GAP: machine learning-
+enhanced genomic analysis
+pipeline using autoencoders and
+data augmentation
+Melih Agraz1,2*, Dincer Goksuluk3, Peng Zhang4,5,
+Bum-Rak Choi5,6, Richard T. Clements4,7, Gaurav Choudhary4,5,6*
+and George Em Karniadakis1,8
+1Division of Applied Mathematics, Brown University, Providence, RI, United States,2Department of
+Statistics, Giresun University, Giresun, Türkiye,3Department of Biostatistics, Erciyes University, Kayseri,
+Türkiye,4Vascular Research Laboratory, VA Providence Healthcare System, Providence, RI, United States,
+5Division of Cardiology, Department of Medicine, Alpert Medical School of Brown University, Providence,
+RI, United States,6Cardiovascular Research Center, Rhode Island Hospital, Providence, RI, United States,
+7Department of Biomedical and Pharmaceutical Sciences, University of Rhode Island College of
+Pharmacy, South Kingston, RI, United States,8School of Engineering, Brown University, Providence, RI,
+United States
+Introduction: The advent of RNA sequencing (RNA-Seq) has signi ﬁcantly
+advanced our understanding of the transcriptomic landscape, revealing
+intricate gene expression patterns across biological states and conditions.However, the complexity and volume of RNA-Seq data pose challenges inidentifying differentially expressed genes (DEGs), critical for understanding themolecular basis of diseases like cancer.
+Methods: We introduce a novel Machine Learning-Enhanced Genomic Data
+Analysis Pipeline (ML-GAP) that incorporates autoencoders and innovative dataaugmentation strategies, notably the MixUp method, to overcome thesechallenges. By creating synthetic training examples through a linearcombination of input pairs and their labels, MixUp signi ﬁcantly enhances the
+model ’s ability to generalize from the training data to unseen examples.
+Results: Our results demonstrate the ML-GAP ’s superiority in accuracy,
+efﬁciency, and insights, particularly crediting the MixUp method for its
+substantial contribution to the pipeline ’s effectiveness, advancing greatly
+genomic data analysis and setting a new standard in the ﬁeld.
+Discussion: This, in turn, suggests that ML-GAP has the potential to perform more
+accurate detection of DEGs but also offers new avenues for therapeuticOPEN ACCESS
+EDITED BY
+Matteo Chiara,
+University of Milan, Italy
+REVIEWED BY
+Erol E ğrioğlu,
+Giresun University, TürkiyeSelcuk Korkmaz,Trakya University, Türkiye
+*CORRESPONDENCE
+Melih Agraz,
+melih_agraz@brown.edu
+Gaurav Choudhary,
+gaurav_choudhary@brown.edu
+RECEIVED 02 June 2024
+ACCEPTED 03 September 2024
+PUBLISHED 25 September 2024
+CITATION
+Agraz M, Goksuluk D, Zhang P, Choi B-R,Clements RT, Choudhary G and Karniadakis GE(2024) ML-GAP: machine learning-enhancedgenomic analysis pipeline using autoencoders
+and data augmentation.
+Front. Genet. 15:1442759.
+doi: 10.3389/fgene.2024.1442759
+COPYRIGHT
+© 2024 Agraz, Goksuluk, Zhang, Choi,Clements, Choudhary and Karniadakis. This is anopen-access article distributed under the termsof the Creative Commons Attribution License
+(CC BY) . The use, distribution or reproduction in
+other forums is permitted, provided the original
+author(s) and the copyright owner(s) arecredited and that the original publication in thisjournal is cited, in accordance with acceptedacademic practice. No use, distribution orreproduction is permitted which does not
+comply with these terms.
+Abbreviations: DEGs, Differentially Expressed Genes; LIME , Local Interpretable Model-agnostic
+Explanations; LUAD, Lung Adenocarcinoma; LUSC, Lung Squamous Cell Carcinoma; ML, Machine
+Learning; ML-GAP, Machine Learning-Enhanced Genomic Data Analysis Pipeline; PCA, PrincipalComponent Analysis; RCC, Renal Cell Carcinoma; RNA-Seq, RNA Sequencing; SHAP, SHapleyAdditive exPlanations; TCGA, The Cancer Genome Atlas; VarImp, Variable Importance; XAI,explainable arti ﬁcial intelligence.
+Frontiers in Genetics frontiersin.org 01TYPE Original Research
+PUBLISHED 25 September 2024
+DOI10.3389/fgene.2024.1442759
+intervention and research. By integrating explainable arti ﬁcial intelligence (XAI)
+techniques, ML-GAP ensures a transparent and interpretable analysis, highlightingthe signi ﬁcance of identi ﬁed genetic markers.
+KEYWORDS
+RNA-seq, differential expression, mixup, machine learning, feature selection
+1 Introduction
+RNA sequencing (RNA-Seq) em ploys advanced sequencing
+t e c h n o l o g yt oi d e n t i f yt h en u c l e o t i d es e q u e n c eo fR N Am o l e c u l e sand measure the abundance of speci ﬁcR N At y p e sw i t h i nR N A
+molecule populations ( Deshpande et al., 2023 ). Typically, the main
+goal of RNA-Seq analysis is to detect g enes that are expressed differently
+under various biological circumstances ( Piao and Ryu, 2017 ). Traditional
+RNA-Seq analysis methodologies, whi le effective, often face limitations
+in identifying differentially expressed genes (DEGs) that are crucial forunderstanding the molecular underpinnings of diseases, includingcancer. This challenge is magni ﬁed by the complexity and sheer
+volume of data genera ted, necessitating advanced analytical
+approaches to fully harness the potential of RNA-Seq data.
+Recent research has established that the application of machine
+learning (ML) algorithms to RNA-Seq data can effectively classify
+different problems based on gene expression pro ﬁles. Dag et al. ( Dag
+et al., 2023 ) introduced GeneSelectML, an open-source web-based tool
+for gene selection from RNA-Seq data using ML algorithms. It features6 ML algorithms, pre-processing steps, and graphical outputs likeheatmaps and network plots, alongside gene ontology analysis forDEGs. Demonstrated on Alzheimer ’s RNA-seq data, GeneSelectML
+aids in identifying potential biomarkers by employing multiple ML
+algorithms simultaneously for gene selection. This tool combines pre-
+processing, visualization and ML methods. Stathopoulou et al.(Stathopoulou et al., 2024 ) investigated the overlap of ML
+algorithms in RNA-seq analysis for estimating gene expressionacross various cancer types. Using Random Forest and GradientBoosting algorithms, their research demonstrated thereproducibility and overlap in identifying signi ﬁcant DEGs,
+enhancing the understanding of genes ’roles in cancer development.
+Their ﬁndings highlight the ef ﬁcacy of combining ML with RNA-seq
+to improve the identi ﬁcation of critical DEGs, contributing valuable
+insights into cancer biology and potentially improving diagnostic andtherapeutic strategies. Wang et al. ( Wang et al., 2018 )i d e n t i ﬁed
+important features with three feature selection algorithms(Information Gain, Correlation Fe ature Selection, and ReliefF).
+They employed ﬁve widely used classi ﬁers (Logistic Regression,
+Classi ﬁcation via Regression, Random Forest, Logistic Model Trees,
+Random Subspace) to predict DEGs. Their study demonstrates the
+applicability of ML to improve the prediction and understanding ofgene expression, speci ﬁcally in relation to transcriptional regulation in
+response to ethylene in plant seedlings. Piao and Ryu ( Piao and Ryu,
+2017) introduced a novel approach for identifying DEGs in RNA-seq
+data by applying a feature selection method that utilizes symmetricaluncertainty for gene ranking and a prede ﬁned relevance threshold for
+selection. In their evaluation, the method achieved high sensitivity
+(0.986) and speci ﬁcity (0.982) on large-sample datasets, outperforming
+traditional statistical approaches like edgeR ( Robinson et al., 2009 ),
+DESeq ( Love et al., 2014 ), and baySeq ( Hardcastle and Kelly, 2010 )i nterms of Area Under the Curve values, with notable improvements
+observed even in challenging small-sample conditions. Arowolo et al.(Arowolo et al., 2020 ) developed a principal component analysis
+(PCA) model to enhance RNA-seq malaria vector dataclassi ﬁcation using k-nearest neighbour (KNN) and Decision Tree
+algorithms. The team aimed to address the challenge of highdimensionality in malaria vector RNA-seq data by employing PCA
+for feature extraction. This method effectively reduced the dataset ’s
+complexity, making it more manageable for classi
+ﬁcation tasks. The
+classi ﬁcation performance was evaluated on a mosquito Anopheles
+gambiae RNA-Seq dataset, yielding accuracy rates of 86.7% for KNN
+and 83.3% for Decision Tree classi ﬁers.
+While the application of ML to RNA-Seq data shows promise, there
+are concerns regarding the interpretability of the models. According toRudin ( Rudin, 2019 ), black box ML models may not be suitable for
+high-stakes decisions in the context o f medical research. Instead, Rudin
+suggests the use of interpretable models to ensure transparency andunderstanding of the underlying mechanisms ( Rudin, 2019 ). This
+insight raises important consid erations for the development and
+application of ML models in the context of RNA-Seq data analysis.The present study introduces a novel Machine Learning-EnhancedGenomic Analysis Pipeline (ML-GAP) utilizing autoencoders and dataaugmentation, aimed at addressing these challenges. By integrating ML
+techniques with autoencoders and d ata augmentation strategies, ML-
+GAP provides a new approach to enhance the detection of DEGs,particularly those elusive to conventional methods. Our pipeline notonly facilitates a more in-depth analysis of RNA-Seq data but also aidsin the identi ﬁcation of potential genes associ ated with clinical outcomes,
+thereby offering new avenues for medical research. The incorporation ofexplainable arti ﬁcial intelligence (XAI) techniques distinguishes ML-
+GAP, enabling a transparent and interpretable analysis that underscores
+the signi ﬁcance of identi ﬁed genetic markers. ML-GAP stands as a
+testament to the power of ML in genomic data analysis, setting a newstandard for accuracy, ef ﬁciency, and insights in the ﬁeld.
+The paper is organized as follows. In Section 2 , the materials and
+methods used in the study are presented, covering thecomprehensive work ﬂow of ML-GAP for RNA-Seq data. In
+Section 3 , we present the ﬁndings from applying the ML-GAP to
+RNA-Seq data, highlighting the performance of our approach in
+identifying DEGs and showcasing the effectiveness of the MixUp
+method in improving model generalization. Additionally, the fullforms of the abbreviations are listed in Supplementary Table S1 .
+2 Material and methods
+2.1 Overview of the study
+This study introduces ML-GAP, an approach speci ﬁcally designed
+to address the challenges inherent in RNA-Seq data analysis. It
+Frontiers in Genetics frontiersin.org 02Agraz et al. 10.3389/fgene.2024.1442759
+leverages advanced ML techniques, including autoencoders and data
+augmentation strategies such as MixUp, to enhance the detection ofDEGs. These methods not only improve the accuracy of geneexpression analysis but also offer robustness against the noise andvariability typical of RNA-Seq data. The pipeline is further re ﬁned by
+the incorporation of XAI techniques, ensuring that the analytical
+process remains transparent and the results interpretable. We
+constructed this pipeline using Python as the main programminglanguage, integrating several libraries such as Scikit-learn for machinelearning, SHAP and LIME for explainability, and other tools forgenomic data preprocessing and analysis.
+1. Count Data The initial step involves compiling a data matrix,
+denoted as X, which has dimensions p-by-n, representing
+genes -by-samples .
+2. Data Preprocessing
+a.Filtering: Applying both low count ﬁltering and zero-variance
+ﬁlter to re ﬁne the count data.
+b.Normalization : Employing DESeq median normalization to
+adjust the data.
+c.Transformation : Implementing variance stabilizing
+transformation to make the data more suitable for analysis.
+3. Dimension Reduction
+a. Principal Component Analysis (PCA): PCA is employed to
+reduce the gene count in the genetic or molecular pro ﬁles
+dataset to 2000. This step signi ﬁcantly simpli ﬁes the
+complexity of the data, making it more manageable forsubsequent analysis and improving interpretability.
+b. Dimension Reduction for Differentially Expressed Genes
+(DEGs): Following PCA, the gene count is further reduced
+to 200 features using differential expression analysis. This
+focused reduction selects genes that show statisticallysigniﬁcant differences in expression associated with
+clinical outcomes, thus enhancing the potential formeaningful biological insights and therapeutic targets.
+4. Machine Learning Performance After applying the dimensionality
+reduction techniques, we evaluated the performance of machinelearning models using three dist inct approaches: PCA and DEGs,
+Autoencoders, and Augmentation with MixUp. For each
+approach, we calculated several performance metrics, includingAccuracy, Positive Predictive Value (PPV), Negative PredictiveValue (NPV), Sensitivity, Speci ﬁcity, and F1 Score. These metrics
+provide a comprehensive evaluation of the models ’effectiveness in
+identifying DEGs across our datasets. We optimized the modelparameters using a 5-fold cross-va lidation grid search. To evaluate
+the model performance, we used an independent test set, splitting
+the dataset into training and testing sets with an 80/20 ratio using
+the train_test_split function from Scikit-learn.
+a. PCA and DEGs Approach: Dimensionality was ﬁrst reduced
+via PCA and DEGs selection. Machine learning models werethen applied to this re ﬁned dataset, and the performance was
+assessed based on the aforementioned metrics.
+b. Autoencoders Approach: Following dimensionality
+reduction via autoencoders, models were trained and
+evaluated similarly using the same set of metrics.
+c. Augmentation Approach (MixUp ): The dataset was augmented
+using the MixUp technique before applying the machine learningmodels, which were evaluated using the same metrics to assess
+the impact of augmentation on model performance.
+5. Explainable Machine Learning (XAI)
+a.SHAP (SHapley Additive exPlanations) SHAP is employed to
+determine the in ﬂu e n c eo fe a c hg e n eo nt h em o d e l ’s output,
+thereby enhancing the interpretability of the model ’s decisions.
+It identi ﬁes the top-10 features based on the performance
+evaluation.
+b.LIME (Local Interpretable Model-agnostic Explanations)
+LIME elucidates model predictions by approximating themodel locally with an interpretable surrogate, which helps inunderstanding the impact of various features on the model ’s
+decisions. Top-10 features are identi ﬁed following the
+analysis of model performance.
+c.Variable Importance (VarImp) This technique highlights the
+genes that signi ﬁcantly in ﬂuence predictions, underlining
+their biological importance. VarImp is used to determinetop-10 features after applying ML models and evaluatingtheir performance.
+6. Biological Validation
+a.Graphical Representations Visual representations are created
+such as Volcano plots and Ven diagrams.
+b.Gene Ontology The functionality of selected genes is compared
+with existing literature to validate their roles and relevance inbiological processes and disease mechanisms.
+2.2 Dataset and preprocesisng
+We conducted an analysis utilizing two RNA-Seq datasets
+pertaining to Renal Cell Carcinoma (RCC), sourced from The
+Cancer Genome Atlas (TCGA) network.
+2.2.1 Renal cell carcinoma (RCC)
+From TCGA, we obtained sequencing reads for
+20,531 recognized human RNAs from a cohort of 1,020 patientsdiagnosed with RCC. These patients were classi ﬁed into three
+predominant subtypes: kidney renal papillary cell carcinoma
+(KIRP), kidney renal clear cell carcinoma (KIRC), and kidney
+chromophobe carcinoma (KICH), with respective sample countsof 606, 323, and 91. In the RCC dataset, we excluded data labeled asKICH, maintaining only the records for KIRC and KIRP patients,culminating in a ﬁnal tally of 929 observations.
+2.2.2 Lung cancer data
+We utilized data on lung cancer obtained from the TCGA
+platform. This dataset includes the mapped read counts for
+20,531 recognized human RNAs from 1,128 patients with lungcancer. These patients were classi ﬁed into two speci ﬁc lung
+cancer types: lung adenocarcinoma (LUAD) and lung squamouscell carcinoma (LUSC), with respective sample sizes of 576 and 552.
+Principal components plots for lung and RCC data, shown in
+Figure 1 , illustrate the separation of samples based on the ﬁrst two
+principal components. These plots highlight the inherent variance
+within the datasets and the effectiv eness of the preprocessing steps.
+The dimensionality reduction achieved through PCA is crucial forsubsequent analyses, as it highlig hts the distinct clustering of the
+Frontiers in Genetics frontiersin.org 03Agraz et al. 10.3389/fgene.2024.1442759
+different cancer subtypes, thereby con ﬁrming the integrity and
+quality of our dataset.
+2.2.3 Data preprocessing
+RNA-Seq data inherently presents an abundance of zero values
+and encompasses variations between samples stemming fromexperimental procedures. The preprocessing steps outlined in
+Figure 2 are employed to mitigate the impact of low-quality
+features and inter-sample variations. Initially, features withexceedingly low counts were excluded through near-zero varianceﬁltering ( Kuhn, 2008 ). Subsequently, a normalization process was
+executed on the pre- ﬁltered raw counts before progressing to
+downstream analyses. This step aimed to mitigate the in ﬂuence of
+sequencing depth, technical variation, and potential biases, whileretaining the inherent biological variations among samples. To
+achieve this, we implemented the median-ratio normalization
+method from the DESeq2 package ( Love et al., 2014 ), chosen for
+its resilience against outliers and its ef ﬁcacy in eliminating technical
+variations across samples. We calculated the size factor s
+jusing
+DESeq normalization, as expressed by the following Equation 1 :sj/equalsmj
+/summationtextn
+j/equals1mj,mj/equalsmedianxij
+Gi/braceleftBigg/bracerightBigg
+i:Gi≠0,Gi/equals/productdisplayn
+j/equals1xij⎛⎝ ⎞⎠1/n
+(1)
+where Girepresents the geometric mean of raw counts for the i-th
+feature. The quantity mjis computed over features having non-zero
+geometric means. Various alternative normalization techniques, suchas the trimmed mean of M-values, upper quantile, Reads Per Kilobaseper Million mapped reads (RPKM), and the logarithm of counts per
+million reads (log-CPM), are discussed in pertinent literature ( Bullard
+et al., 2010 ;Mortazavi et al., 2008 ;Robinson and Oshlack, 2010 ). This
+study employed the ‘variance stabilizing transformation (VST) ’
+(Anders and Huber, 2010 ;Love et al., 2014 ), as implemented in
+the DESeq2 package. The primary objective was to mitigate thedependence between mean and variance in normalized counts,thereby approximating the data to normality and rendering it lessskewed. It is imperative to acknowledge that following the VST
+transformation, the variances exhibit approximate independence
+from the mean. Nevertheless, it is crucial to recognize that thesevariances remain unequal across all genes, potentially leading to thepresence of outliers within the dataset ( Zwiener et al., 2014 ).
+FIGURE 1
+Principal components plots for (A)Lung and (B)RCC data.
+Frontiers in Genetics frontiersin.org 04Agraz et al. 10.3389/fgene.2024.1442759
+In the preprocessing step, we transfer the data from raw counts
+to normalized counts. Given that RNA-Seq data contains manyfeatures and few observations (n≪p), it becomes imperative to
+meticulously select a subset of features that exhibit associations withthe outcome and actively contribute to the ef ﬁcacy of the ﬁtted
+model. Consequently, we are sequentially applying PCA and
+differential expression analysis.
+2.3 Dimension reduction
+2.3.1 Principal component analysis (PCA)
+Principal Component Analysis (PCA ) is a statistical technique used
+in data analysis and ML to emphasize variation and extract strong
+patterns, with its modern version formalized by Hotelling ( Hotelling,
+1933). It simpli ﬁes complex genetic information by transforming it into
+a lower-dimensional space, reve aling key variables (principal
+components). By highlighting signi ﬁcant relationships in high-
+dimensional data, PCA aids in vis ualizing and analyzing genetic
+patterns and biological processes. This study employs PCA afternormalizing RNA-Seq data to reduce its dimensionality.2.3.2 Differentially Expressed Genes (DEGs)
+The identi ﬁcation of differentially expressed genes (DEGs) is
+crucial in bioinformatics to detect genes with statisticallysigniﬁcant differences in expression levels across various sample
+groups. After applying PCA for dimensionality reduction, furtheranalysis focuses on identifying DEGs to gain insights into genetic
+expression changes linked to clinical outcomes. This dual approach
+ensures that features selected for ML models are highly informative,both statistically and biologically, thereby reducing complexity whilehighlighting potential therapeutic targets.
+2.4 Machine learning model performance
+2.4.1 Autoencoders
+Autoencoders, ﬁrst introduced by McClelland et al. (1987) , are a
+type of neural network used in unsupervised learning, designed torecreate their input. Their primary function is to learn useful featuresor representations within the data. An autoencoder typically consistsof three key components: an encoder, a compressed representation(also known as the bottleneck or latent layer), and a decoder as seen in
+FIGURE 2
+Work ﬂow of the data processing and the pipeline in the proposed methodology. The work ﬂow utilized for processing and analyzing transcriptomics
+data. Starting with raw count data, the process involves preprocessing steps such as ﬁltering and normalization, followed by dimension reduction through
+principal component analysis (PCA). The analysis identi ﬁes differentially expressed genes (DEGs), which are then processed through ML techniques,
+including PCA and DEGs and Autoencoders, to measure and enhance algorithm performance. The pipeline integrates data augmentationtechniques to improve model robustness and employs explainable arti ﬁcial intelligence (XAI) tools like SHAP to interpret the model outcomes. The
+work ﬂow concludes with molecular biology validation to con ﬁrm the biological relevance of the ﬁndings.
+Frontiers in Genetics frontiersin.org 05Agraz et al. 10.3389/fgene.2024.1442759
+Figure 3 . The encoder condenses the data into a reduced-dimensional
+space, and the decoder restores the data to its original shape. In our
+study, we employed an autoencoder neural network structure toexplore dimensionality reduction within our dataset, which wassplit into training and test sets. The input layer of the autoencoderconsisted of 200 neurons, corresponding to the dimensionality of thedata in the training set. This was followed by an encoder layer with128 neurons and a hidden layer with 72 neurons, representing thecompressed representation of the input data. The decoder part of the
+network then aimed to reconstruct the input data from this reduced
+72-neuron representation. By training the autoencoder on the trainingset and evaluating its performance on the test set, we were able toassess the model ’s ability to reduce the dimensionality of the data from
+200 to 72 while still retaining the essential characteristics necessary forreconstruction. The observations in the test set that resulted in thelowest reconstruction error, particularly the 72 with the most minimalerror, were identi ﬁed as those best represented by the autoencoder,
+demonstrating the model ’s effectiveness in dimensionality reduction.
+2.4.2 Augmentation (MixUp)
+Zhang et al. ( Zhang et al., 2017 ) introduced an advanced data
+augmentation technique, called MixUp, devised to address the issueof class imbalance by generating new samples through a strategiccombination of data points. This technique is grounded on theEquation 2 :
+~x/equalsλx
+i+1−λ () xj, ~y/equalsλyi+1−λ () yj, (2)
+where ~xand ~ydenote the synthesized input and output pairs,
+respectively. The coef ﬁcient λis sampled from the Beta distribution,
+Beta(α,α), highlighting the signi ﬁcance of αas a crucial
+hyperparameter in modulating the mixing intensity. The inputs xi
+andxj, along with their corresponding outputs yiandyj, are selected
+from distinct samples within the dataset. A distinctive aspect of ourimplementation of the MixUp algorithm is its application exclusively to
+the minority class, aimed at im proving the representation of
+underrepresented categories within the dataset without altering thedistribution of the majority class .T h i st a r g e t e da p p r o a c ht o w a r d st h e
+minority class is designed to enhance the model ’s sensitivity to these
+categories, potentially leading to i mproved fairness and accuracy in the
+model ’s predictions across varied datasets.2.4.3 Machine learning model performance
+In the analysis of RCC and lung cancer data, both Random Forest
+and XGBoost ML algorithms were utilized to develop predictive models.To optimize the performance of these models, a comprehensive gridsearch was conducted to ﬁne-tune their hyperparameters. This involved
+the use of repeated k-fold cross-validation, speci ﬁcally partitioning the
+data into ﬁve folds, to ensure a robust evaluation of the model ’s
+performance across various subsets of the data. The grid searchmethod, executed with a 5-fold cro ss-validation approach, is crucial
+for verifying the generalizability and ef ﬁcacy of the ML models on
+unseen data, thereby ensuring that the selected models are well-suitedfor predicting outcomes in RCC and lung cancer cases based on theirrespective optimized parameters. We explain different algorithm steps
+in the following work ﬂow as represented in Figure 2 .
+(a)PCA and DEGs : Initially, the dimensionality of the dataset was
+reduced using PCA and the identi ﬁcation of DEGs. This step
+was crucial for simplifying the dataset by focusing on the most
+informative features.
+(b)Autoencoders Approach : Following the initial dimensionality
+reduction, autoencoders were utilized as an advanced techniqueto further compress the dataset into a more manageable size. Thiswas particularly bene ﬁcial for capturing complex, nonlinear
+r e l a t i o n s h i p sw i t h i nt h ed a t a .M Lm o d e l sw e r et h e na p p l i e dt othis re ﬁned dataset, and their perform ance metrics were evaluated.
+(c)Augmentation Approach : To augment the dataset post-initial
+dimensionality reduction (PCA and DEGs), an augmentationtechnique, speci ﬁcally MixUp, was implemented. This approach
+not only reduced dimensionality but also increased the number
+of samples by blending observations. Subsequently, ML modelswere applied to this enhanced dataset, and their ef ﬁcacy was
+assessed through various performance metrics.
+2.5 Explainable Machine Learning (XAI)
+Upon determining the most effective dimensionality reduction
+method —be it PCA and DEGs, Autoencoders, or Augmentation
+approaches, based on accuracy metrics —we proceeded to apply XAI
+techniques to elucidate the predictive models further. Speci ﬁcally,
+FIGURE 3
+Detailed schematic of an autoencoder network for RNA sequencing data compression and reconstruction. The ‘Encoder ’stage (g(x)) processes the
+input high-dimensional RNAseq data, compressing it into a condensed representation at the ‘Bottleneck Layer ’(z). Subsequently, the ‘Decoder ’stage (f(z))
+aims to reconstruct the RNAseq data from this lower-dimensional representation to an output (x ’) that is as similar to the original input as possible. This
+process enables the reduction of data complexity and noise, facilitating more ef ﬁcient storage and analysis.
+Frontiers in Genetics frontiersin.org 06Agraz et al. 10.3389/fgene.2024.1442759
+we utilized SHAP, LIME, and VarImp analyses and selected the top-
+10 important features. These techniques were instrumental inidentifying the most signi ﬁcant features contributing to the
+models ’predictions, thereby enhancing the transparency and
+interpretability of our ML models. This step is critical forunderstanding the underlying mechanisms of the models ’
+decisions, particularly in the complex domain of RCC and lung
+cancer prediction, where interpretability is as crucial as accuracy.
+2.6 Biological Validation
+2.6.1 Graphical representations
+Following the identi ﬁcation of effective features through the
+application of XAI techniques, we visually represented these selectedfeatures using Volcano plots and Venn diagrams. Volcano plotswere employed to depict the statistical signi ﬁcance versus the
+magnitude of change of the features, offering a clear visualizationof the most in ﬂuential features identi ﬁed by our models. Similarly,
+Venn diagrams were utilized to illustrate the overlap and uniqueness
+of signi ﬁcant features across different models or dimensionality
+reduction techniques.
+2.6.2 Gene ontology (GO)
+In our analysis pipeline, we incorporated a Gene Ontology (GO)
+step to ascertain whether the selected features are relevant to lung canceror RCC. This bioinformatics approach enables us to categorize theidenti ﬁed genes based on the related biological processes, cellular
+components, and molecular functions. By mapping the signi ﬁcant
+features to GO terms, we were ab le to validate the biological
+signiﬁcance of these features in the context of lung cancer and RCC.
+This step is crucial for ensuring that the ML models are not onlystatistically robust but also biologi cally relevant, thereby enhancing the
+credibility and applicability of our ﬁndings in clinical settings. In this
+step, we checked the selected feature s that are related to the literature on
+lung cancer and listed the results listed in Table 2 .
+3 Results and discussion
+In our study, as delineated in Figure 2 , we initiated our data
+preprocessing by applying a “Filtering ”step to the lung cancer and
+RCC count data. This ﬁltering aimed at excluding features with low
+variability, speci ﬁcally targeting those with negligible
+variance —often referred to as ‘near-zero variance ’. This
+preliminary re ﬁnement was critical to ensure the integrity of our
+dataset, thereby preventing potential biases in the analysis due tosuper ﬂuous or non-informative data. Subsequent to the ﬁltering, we
+proceeded with the normalization of the data in the “Normalization ”
+step. For this purpose, we employed a median-ratio normalizationmethod, which is a part of the DESeq2 bioinformatics tool. This
+particular normalization technique is known for its effectiveness in
+reducing technical biases without distorting the genuine biological
+differences between the samples. By employing this approach, wewere able to achieve a normalized dataset that reliably re ﬂects the
+underlying biological conditions. In the subsequent phase of ouranalysis, following the ﬁltering and normalization steps, we
+employed “PCA ”step as a dimensionality reduction technique.PCA is a robust statistical method that converts the data into a
+series of linearly independent variables called principal components.This technique enables us to reduce the complexity of our data bytransitioning from a high-dimensional space —comprising
+approximately 19,000 variables —to a more manageable, lower-
+dimensional space. By doing so, PCA accentuates the most
+signiﬁcant patterns and relationships within the data, which are
+essential for our further analysis. The dimension reductionaccomplished through PCA is instrumental in enhancingcomputational ef ﬁciency and improving the interpretability of the
+dataset, thus preparing the ground for the subsequent identi ﬁcation
+of DEGs. Subsequent to dimensionality reduction through PCA,where we effectively condensed our dataset ’s features from around
+2000 to 200 features, we embarked on the critical phase of
+identifying DEGs in “DEGs ”step. DEGs are genes that show
+statistically signi ﬁcant differences in expression levels between
+different biological states or experimental conditions. In ouranalysis, the reduced dimensionality facilitated a more targetedand ef ﬁcient investigation into gene expression changes. By
+applying statistical tests to the principal components, we wereable to detect genes whose expression levels were consistentlyaltered across our sample groups. This identi ﬁcation of DEGs is
+a pivotal step in our research, as it lays the groundwork for
+understanding the molecular mechanisms that may underlie thebiological phenomena under study. The DEGs serve as valuablemarkers for potential pathways that are activated or suppressed inresponse to speci ﬁc conditions, providing insights that are essential
+for further biological interpretation and validation. After theﬁltering and dimension reduction steps, we compare the
+proposed methods with classic PCA and DEGs dimension
+reduction techniques in the Machine Learning Solution step. In
+this step, we compare three different methods as seen below.
+1. Machine learning algorithms, including XGBoost and Random
+Forest, were applied to a dataset of 200 genes that had beenreﬁned through PCA and DEGs identi ﬁcation methods. The
+effectiveness of these algorithms was evaluated using variousperformance metrics.
+2. Autoencoders were then employed to further reduce the
+dimensionality of the dataset, which resulted from PCA and
+DEGs methods, down to 72 features. Subsequently, theXGBoost and Random Forest algorithms were applied tothis reduced dataset, and performance metrics werecalculated to assess the impact of thisdimensionality reduction.
+3. The dataset of 200 genes, derived from PCA and DEGs
+methods, was augmented using the MixUp technique, which
+artiﬁcially expands the data pool without additional
+dimensionality reduction. This augmentation is intended toenhance the robustness and generalizability of the ML models.After augmentation, the same ML algorithms were re-applied,and the resulting performance metrics were examined todetermine the effectiveness of this augmentation.
+As detailed in Table 1 , the MixUp technique, when applied to the
+RCC dataset, emerged as the most effective strategy across variousmetrics, particularly when used wi th the XGBoost model. This method
+achieved outstanding performance, with perfect scores for NPV
+Frontiers in Genetics frontiersin.org 07Agraz et al. 10.3389/fgene.2024.1442759
+(1.0000) and Recall (Sensitivity) ( 1.0000), indicating its accuracy in
+correctly identifying both true negatives and true positives. Additionally,MixUp delivered impressive results in terms of Accuracy (0.9946),
+Precision (PPV: 0.9915), and the F1 Score (0.9957), which highlights the
+balance between Precision and Recall.
+Although the computational time for MixUp was higher due to
+the increased dataset size from synthetic data generation (asreﬂected in Table 1 ), the signi ﬁcant improvements in predictive
+performance more than justify this added cost. Particularly in caseswhere achieving a balance between Precision and Recall is critical,MixUp proved to enhance model robustness and overall
+classi ﬁcation performance. The technique ’s superior results in
+handling imbalanced data, especially in the RCC dataset,underscore its potential to improve model reliability acrossvarious performance metrics.
+Given the superior results yielded by the MixUp method, we
+proceeded to identify the most impactful features affecting ourRNA-Seq data within this framework in “XAI ”step. Toaccomplish this, we calculated VarImp using the Random Forest
+and XGBoost algorithms applied to both lung and RCC datasets. Wefurther enriched our analysis by implementing SHAP and LIME
+methodologies to ascertain the top-10 most essential genes in our
+model ’s performance. The selected genes were not only prominent
+based on variable importance rankings but also stood out in SHAPand LIME analyses, con ﬁrming their signi ﬁcant role in the
+predictive model. We have listed the top-10 features obtainedfrom the XGBoost and Random Forest models —namely SHAP,
+LIME, and VarImp —inFigure 4 .
+In the “Biological Validation ”, we utilize Volcano plots to
+graphically illustrate the signi ﬁcant gene expressions identi ﬁed
+during the XAI analysis. Figures 5 ,6in showcase these pivotal
+ﬁndings for RCC and lung cancer data respectively. The plots
+incorporate algorithms such as random forest and XGBoost inconjunction with interpretabil ity methods like LIME, SHAP, and
+Variable Importance. Each plot i s methodically constructed with
+thex-axis representing the log fold change (logFC) and the y-axisTABLE 1 Comparative analysis of model evaluation metrics for XGBoost and Random Forest across different datasets: RCC and lung datasets. The
+performance metrics are shown for different data processing techniques including PCA & DEGs, Autoencoders, and MixUp augmentation.
+XGBoost
+Accuracy Precision NPV Recall Speci ﬁcity F1 Score Time (s)
+PCA and DEGs (Lung) 0.9690 0.9758 0.9608 0.9680 0.9703 0.9719 416.07
+(1128 × 201 )
+Autoencoders (Lung) 0.9601 0.9531 0.9694 0.9760 0.9406 0.9644 213.42
+(1128 × 63 )
+MixUp (Lung) 0.9823 0.9754 0.9904 0.9917 0.9717 0.9835 573.21
+(2256 × 201 )
+PCA and DEGs (RCC) 0.9624 0.9756 0.9365 0.9677 0.9516 0.9717 341.86
+(929 × 201 )
+Autoencoders (RCC) 0.9516 0.9528 0.9492 0.9758 0.9032 0.9641 173.84
+(929 × 63 )
+MixUp (RCC) 0.9946 0.9915 1.0000 1.0000 0.9857 0.9957 466.98
+(1858 ×s 201)
+Random Forest
+Accuracy Precision NPV Recall Speci ﬁcity F1 Score Time (s)
+PCA and DEGs (Lung) 0.9602 0.9394 0.9894 0.992 0.9208 0.9650 421.96
+(1128 × 201 )
+Autoencoders (Lung) 0.9602 0.9462 0.9792 0.9840 0.9307 0.9647 348.23
+(1128 × 63 )
+MixUp (Lung) 0.9757 0.9636 0.9902 0.9917 0.9575 0.9774 742.91
+(2256 × 201 )
+PCA and DEGs (RCC) 0.9355 0.9444 0.9167 0.9597 0.8871 0.9520 749.18
+(929 × 63 )
+Autoencoders (RCC) 0.9570 0.9677 0.9355 0.9677 0.9355 0.9677 442.19
+(929 × 63 )
+MixUp (RCC) 0.9946 1.0000 0.9860 0.9913 1.0000 0.9957 766.60
+(1858 × 201 )
+Frontiers in Genetics frontiersin.org 08Agraz et al. 10.3389/fgene.2024.1442759
+depicting the negative logarithm of the p-value (-log10 p-value).
+This arrangement accurately measures the degree of changes ingene expression and their statistical importance. As expected,none of the top genes identi ﬁed as in ﬂuential features are located
+within the gray zone of these plots, which signi ﬁesnon-signi ﬁcant gene expression. This absence of features in
+the gray zone underscores the distinct and substantial impactthat these genes have in relation to kidney and lung cancer, asdetermined by the advanced feature selection techniquesemployed in our study.TABLE 2 Differential Gene Expression in Lung and Renal Cell Carcinoma Tissue. The table outlines the regulation patterns of speci ﬁc genes in lung (Lung
+XGB, Lung RF) and renal cell carcinoma (RCC XGB, RCC RF) tissues. Gene symbols, their full names, and references for the associated studies are provide d
+alongside the regulation status. Genes are selected by at least two methods: SHAP, LIME, and VarImp.
+Analysis Gene symbol Real gene name References Up/Downregulated
+Lung XGB ATP1B3 ATPase Na+/K+Beta 3 Relli et al. (2018) Upregulated
+CALML3 Calmodulin Like 3 Zhan et al. (2015)
+CLCA2 Chloride Channel Accessory 2 Shinmura et al. (2014)
+DSG3 Desmoglein 3 Zhan et al. (2015) Upregulated
+KRT5 Keratin 5 Yuan et al. (2020) Upregulated
+LASS3 Ceramide Synthase 3 Su et al. (2019) Upregulated
+SERPINB13 Serpin Family B Member 13 Yuan et al. (2020) Upregulated
+SLC44A4 Solute Carrier Family 44 Member 4 Arroyo et al. (2020) Downregulated
+TMC5 Transmembrane Channel Like 5 Zhan et al. (2015) Downregulated
+Lung RF BNC1 Basonuclin 1 Kim et al. (2010), Yuan et al. (2020) Upregulated
+CALML3 Calmodulin Like 3 Zhan et al. (2015) Upregulated
+DSC3 Desmocollin 3 Zhan et al. (2015) Upregulated
+DSG3 Desmoglein 3 Zhan et al. (2015) Upregulated
+KRT5 Keratin 5 Yuan et al. (2020) Upregulated
+KRT74 Keratin 74 Keogh et al. (2022) Upregulated
+LASS3 CERS3 Dwivedi et al. (2023) Upregulated
+SERPINB13 Serpin Family B Member 13 Yuan et al. (2020) Upregulated
+RCC XGB CAPN1 Calpain 1 Downregulated
+CC2D1A Coiled-Coil and C2 Domain Containing 1A Downregulated
+CLDN3 Claudin 3 Lechpammer et al. (2008)
+COL25A1 Collagen Type XXV Alpha 1 Chain Upregulated
+KCNAB1 Potassium Voltage-Gated Channel Subfamily Sun et al. (2022)
+A Regulatory Beta Subunit 1
+PLXNB1 Plexin B1 Gómez-Román et al. (2010), Li et al. (2021) Downregulated
+KDELC2 KDEL (Lys-Asp-Glu-Leu) Containing 2 Upregulated
+APLN Apelin Tolkach et al. (2019) Upregulated
+RCC RF APLN Apelin Tolkach et al. (2019) Upregulated
+ARHGAP39 Rho GTPase Activating Protein 39 Yao et al. (2023) Downregulated
+C4orf32 Chromosome 4 Open Reading Frame 32 UpregulatedP4HTM Prolyl 4-Hydroxylase, Transmembrane Downregulated
+PLXNB1 Plexin B1 Gómez-Román et al. (2010), Li et al. (2021) Downregulated
+TCF4 T cell Factor 4 Zhao et al. (2016), Xu et al. (2016), Lin et al. (2000) Upregulated
+EBF2 Early B-Cell Factor 2 Upregulated
+RGS5 Regulator of G Protein Signaling 5 Su and Shahriyari (2020)
+Frontiers in Genetics frontiersin.org 09Agraz et al. 10.3389/fgene.2024.1442759
+Additionally, we selected the top 10 important features and
+listed those selected by at least two algorithms in Figure 7 .T h e
+Venn diagrams presented in Figure 7 offer a visual comparison
+of the interpretability methods applied to the Random Forest
+(RF) and XGBoost (XGB) models across Lung and RCC datasets.These diagrams illustrate the features selected by at least twomethods, namely, SHAP, LIME, and VarImp. For the RF Lungmodel (a), we see that eight features were identi ﬁed by at least
+two methods as important, suggesting a strong consensus onthese features ’inﬂuence on the model ’sp r e d i c t i o n s :B N C 1 ,
+CALML3, DSC3, DSG3, KRT5, LRT74, LASS3, and
+SERPINB13. In the case of the XGB Lung model (b), nine
+features were identi ﬁed by all three methods as important,
+suggesting a strong consensus on these features ’inﬂuence on
+the model ’sp r e d i c t i o n s :A T P 1 B 3 ,C A L M L 3 ,C L C A 2 ,D S G 3 ,
+KRT5, LASS3, SERPINB13, SLC44A4, and TMC5. For the RFRCC model (c), at least two methods selected APLN,ARHGAP39, C4orf32, P4HTM, PLXNB1, TCF4, EBF2, andRGS5. Lastly, the XGB RCC model (d) shows a notable
+distribution with eight fea tures, CAPN1, CC2D1A, CLDN3,
+COL25A1, KCNAB1, PLXNB1, KDELC2, and APLN,identi ﬁed by VarImp, SHAP, and LIME.
+As illustrated in Table 1 , given that both methods exhibited
+performances that were roughly equivalent to each other, weinvestigated the ef ﬁcacy of the genes located at the intersection of
+these two methods, as depicted in Figure 7 , by analyzing theireffectiveness in accordance with studies in the literature, as will
+be seen in Table 2 .
+InTable 2 , we present a summarized overview of gene regulation
+patterns discernible in lung tissue and RCC, which are listed among
+the intersected genes in Figure 7 . This table is pivotal for delineating
+the differential expression of genes, as it systematically catalogs thosethat are upregulated and, notably, the singular gene that isdownregulated in the context of RCC. Our analysis employedtwo distinct methodologies, denoted as XGB and RF, to analyzegene expression patterns across lung and RCC tissues. The ‘Up/
+Downregulated ’column indicates whether a gene is expressed at
+higher (upregulated) or lower (downregulated) levels than a
+predetermined baseline, which in this context is the normaltissue expression level. For lung tissue, the uniform upregulationacross both analytical methods (XGB and RF) highlights a consistentover-expression of genes like ATP1B3, which encodes the beta-3subunit of the Na
++/K+-ATPase, and CALML3, which is associated
+with the calmodulin-like protein family. Similarly, keratin-associated genes KRT5 and KRT74 also exhibit upregulation,
+suggesting a possible link to structural or regulatory changes in
+lung tissue under pathological conditions. In contrast, the RCCtissue analysis reveals an intriguing pattern: while the majority ofgenes such as PLXNB1, associated with cellular structure andsignaling, are upregulated, TCF4 stands out as the sole gene thatis downregulated. TCF4, or Transcription Factor 4, is a pivotalelement of the Wnt signaling pathway, and its downregulation could
+FIGURE 4
+Comparative visualization of feature importances as determined by XGBoost for RCC dataset: (A)LIME scores, (B)SHAP values, and (C)variable
+importance metrics.
+Frontiers in Genetics frontiersin.org 10Agraz et al. 10.3389/fgene.2024.1442759
+FIGURE 5
+Volcano plots for Random Forest (RF) and eXtreme Gradient Boosting (XGB) models displaying selected feature importance in RCC data. Each plot
+utilizes a different interpretability method, namely LIME, SHAP, and Variable Importance (VarImp), to highlight the most in ﬂuential features. The x-axis
+shows the log fold change (logFC), indicating the magnitude of change in gene expression, while the y-axis represents the negative logarithm of the p-
+value ( −log10 p-value), denoting statistical signi ﬁcance. The plots differentiate between signi ﬁcant (red), non-signi ﬁcant (green), and unregulated
+(gray) gene expressions. (A)RF LIME - Random Forest model feature importance using LIME explanation method. (B)RF SHAP - Random Forest model
+feature importance using SHAP values for explanation. (C)RF VarImp - Random Forest model feature importance using Variable Importance. (D)XGB
+LIME - eXtreme Gradient Boosting model feature importance using LIME explanation. (E)XGB SHAP - eXtreme Gradient Boosting model feature
+importance using SHAP values for explanation. (F)XGB VarImp - eXtreme Gradient Boosting model feature importance using Variable Importance.
+Frontiers in Genetics frontiersin.org 11Agraz et al. 10.3389/fgene.2024.1442759
+FIGURE 6
+Volcano plots for Random Forest (RF) and eXtreme Gradient Boosting (XGB) models displaying selected feature importance in lung data. Each plot
+utilizes a different interpretability method, namely LIME, SHAP, and Variable Importance (VarImp), to highlight the most in ﬂuential features. The x-axis
+shows the log fold change (logFC), indicating the magnitude of change in gene expression, while the y-axis represents the negative logarithm of the p-
+value ( −log10 p-value), denoting statistical signi ﬁcance. The plots differentiate between signi ﬁcant (red), non-signi ﬁcant (green), and unregulated
+(gray) gene expressions. (A)RF LIME - Random Forest model feature importance using LIME explanation method. (B)RF SHAP - Random Forest model
+feature importance using SHAP values for explanation. (C)RF VarImp - Random Forest model feature importance using Variable Importance. (D)XGB
+LIME - eXtreme Gradient Boosting model feature importance using LIME explanation. (E)XGB SHAP - eXtreme Gradient Boosting model feature
+importance using SHAP values for explanation. (F)XGB VarImp - eXtreme Gradient Boosting model feature importance using Variable Importance.
+Frontiers in Genetics frontiersin.org 12Agraz et al. 10.3389/fgene.2024.1442759
+imply a signi ﬁcant deviation from normal cellular signaling and
+transcriptional regulation in RCC.
+Feature selection in RNA-Seq st udies is typically performed using
+well-established modeling techniq ues available in R/BIOCONDUCTOR
+packages like DESeq2 and edgeR. However, these methods are not
+speciﬁcally designed to identify features that contribute most effectively
+to classi ﬁcation models. Some features, despite being differentially
+expressed between comparison groups, may not signi ﬁcantly improve
+the predictive power of a ﬁtted model. To address this, we proposed a
+hybrid feature selection methodology that aims to select features that areboth differentially expressed and contribute meaningfully to the
+classiﬁcation model ’sp e r f o r m a n c e .
+While our methodology is robust, its effectiveness may be
+inﬂuenced by factors such as sample size, feature count, and
+overdispersion in the data. A comprehensive simulation study,
+particularly one focusing on Type-I and Type-II error rates,
+would be valuable for further evaluating these factors. However,this falls beyond the current scope of our study and could beexplored in future research. The limitations mentioned have beenacknowledged within the manuscript.
+FIGURE 7
+Comparison of XAI methods across different models and datasets. The Venn diagrams illustrate the overlap and uniqueness of selected features as
+determined by SHAP (SHapley Additive exPlanations), LIME (Local Interpretable Modelagnostic Explanations), and Variable Importance (VarImp) fo r
+Random Forest (RF) and eXtreme Gradient Boosting (XGB) models on Lung and RCC datasets. Each number within the diagrams represents the count of
+features identi ﬁed by the corresponding methods.
+Frontiers in Genetics frontiersin.org 13Agraz et al. 10.3389/fgene.2024.1442759
+4 Conclusion
+This study introduced a ML-GAP that utilizes autoencoders and
+data augmentation to enhance the detection and interpretation ofDEGs from RNA-Seq count data. The overarching goal was toaddress the limitations of traditional RNA-Seq analysis methods by
+incorporating advanced ML techniques, thereby providing a deeper
+understanding of gene expression patterns and their associationswith clinical outcomes. The ML-GAP work ﬂow includes several key
+steps: data preprocessing to mitigate low-quality features and inter-sample variations; dimensionality reduction through PCA andDEGs identi ﬁcation; and data augmentation to increase the
+robustness and generalizability of the ML models. Notably, theMixUp augmentation method demonstrated superior results,
+especially in the context of RCC, indicating its effectiveness in
+enhancing the predictive accuracy of our models. Therefore, wefurther analyzed the results obtained from the MixUp method in thenext step XAI. The application of XAI techniques, such as SHAP andLIME, has been crucial in ensuring the transparency andinterpretability of our ﬁndings. These methods allowed us to
+identify the most impactful features, aligning with our objectiveto not only predict but also understand the biological signi ﬁcance
+behind the predictions. The integration of GO analysis further
+validated the relevance of these features in the context of lungcancer and RCC, underscoring the biological and clinicalimplications of our results.
+The ML-GAP represents a signi ﬁcant advance in genomic
+analysis, combining the strengths of ML, data augmentation, andinterpretability to uncover novel insights into gene expressiondynamics. However, challenges such as data quality,
+computational demands, and the need for further methodological
+reﬁnement remain. Future work will focus on addressing these
+challenges, exploring additional datasets, and continuing toenhance the pipeline ’s accuracy and applicability to various
+genomic contexts. Additionally, in future work, it will be valuableto explore the use of generative deep learning models for generatingrealistic bulk RNA-Seq gene expression data. Similar to Wang et al. ‘s
+study ( Wang et al., 2024 ), which used Generative Adversarial
+Networks (GANs) to produce augmented datasets and analyzed
+them with SHAP, integrating these models into our ML-GAPpipeline could signi ﬁcantly enhance data augmentation and
+improve downstream analyses in high-throughput transcriptomics.
+Data availability statement
+Publicly available datasets were analyzed in this study. This data
+can be found here: https://www.cancer.gov/ccg/research/genome-
+sequencing/tcga .
+Ethics statement
+The studies involving humans were approved by The Cancer
+Genome Atlas (TCGA). The studies were conducted in accordance
+with the local legislation and institutional requirements. Theparticipants provided their written informed consent to
+participate in this study.
+Author contributions
+MA: Conceptualization, Data curation, Formal Analysis,
+Investigation, Methodology, Project administration, Resources,Software, Validation, Visualization, Writing –original draft,
+Writing –review and editing. DG: Data curation, Formal Analysis,
+Investigation, Validation, Visualization, Writing –original draft,
+Writing –review and editing, Software. PZ: Conceptualization,
+Funding acquisition, Investigation, Writing –review and editing.
+B-RC: Writing –review and editing, Validation. RC: Investigation,
+Methodology, Validation, Writing –review and editing. GC:
+Conceptualization, Formal Analysis, Funding acquisition,Investigation, Methodology, Validation, Writing –review and
+editing. GK: Conceptualization, Funding acquisition,Methodology, Supervision, Writing –review and editing.
+Funding
+The author(s) declare that ﬁnancial support w as received for
+the research, authorship, and/or publication of this article. This
+work was supported in part by faci lities and resources at the VA
+Providence Healthcare System, the Cardiopulmonary VascularBiology (CPVB) COBRE core fa cilities (P20GM103652) and
+P30GM149398. The views expressed in this article are thoseof the authors and do not necessarily re ﬂect the position or
+policy of the Department of Veterans Affairs or the U.S.
+government.
+Conﬂict of interest
+The authors declare that the research was conducted in the
+absence of any commercial or ﬁnancial relationships that could be
+construed as a potential con ﬂict of interest.
+Publisher ’s note
+All claims expressed in this article are solely those of the authors
+and do not necessarily represent those of their af ﬁliated
+organizations, or those of the publisher, the editors and the
+reviewers. Any product that may be evaluated in this article, or
+claim that may be made by its manufacturer, is not guaranteed orendorsed by the publisher.
+Supplementary material
+The Supplementary Material for this article can be found online
+at:https://www.frontiersin.org/articles/10.3389/fgene.2024.1442759/
+full#supplementary-material
+Frontiers in Genetics frontiersin.org 14Agraz et al. 10.3389/fgene.2024.1442759
+References
+Anders, S., and Huber, W. (2010). Differential expression analysis for sequence count
+data. Genome Biol. 11, R106. doi:10.1186/gb-2010-11-10-r106
+Arowolo, M. O., Adebiyi, M., Adebiyi, A., and Okesola, O. (2020). “Pca model for rna-
+seq malaria vector data classi ﬁcation using knn and decision tree algorithm, ”in
+2020 international conference in mathematics, computer engineering and computer
+science (ICMCECS) (IEEE), 1 –8.
+Arroyo, M., Larrosa, R., Gómez-Maldonado, J., Cobo, M., Claros, M., and Bautista, R.
+(2020). Expression-based, consistent biomarkers for prognosis and diagnosis in lung
+cancer. Clin. Transl. Oncol. 22, 1867 –1874. doi:10.1007/s12094-020-02328-4
+Bullard, J. H., Purdom, E., Hansen, K. D., and Dudoit, S. (2010). Evaluation of
+statistical methods for normalization and differential expression in mrna-seq
+experiments. BMC Bioinforma. 11, 94. doi:10.1186/1471-2105-11-94
+Dag, O., Kasikci, M., Ilk, O., and Yesiltepe, M. (2023). Geneselectml: a comprehensive
+way of gene selection for rna-seq data via machine learning algorithms. Med. and Biol.
+Eng. and Comput. 61, 229 –241. doi:10.1007/s11517-022-02695-w
+Deshpande, D., Muszy ńska, A., Zhao, F., P Łabaj, P., Mangul, S., Zhang, J., et al.
+(2023). Rna-seq data science: from raw data to effective interpretation. Front. Genet. 14,
+997383. doi:10.3389/fgene.2023.997383
+Dwivedi, K., Rajpal, A., Rajpal, S., Agarwal, M., Kumar, V., and Kumar, N. (2023). An
+explainable ai-driven biomarker discovery framework for non-small cell lung cancerclassi ﬁcation. Comput. Biol. Med. 153, 106544. doi:10.1016/j.compbiomed.2023.106544
+Gómez-Román, J. J., Nicolas Mart ınez, M., Lazuén Fernández, S., and Val-Bernal, J. F.
+(2010). Plxnb1 (plexin b1). Atlas Genet. Cytogenet Oncol. Haematol. 3, 416 –422. doi:10.
+4267/2042/44702
+Hardcastle, T. J., and Kelly, K. A. (2010). baySeq: empirical bayesian methods for
+identifying differential expression in sequence count data. BMC Bioinforma. 11, 422.
+doi:10.1186/1471-2105-11-422
+Hotelling, H. (1933). Analysis of a complex of statistical variables into principal
+components. J. Educ. Psychol. 24, 498 –520. doi:10.1037/h0070888
+Keogh, A., Ryan, L., Nur, M. M., Baird, A.-M., Nicholson, S., Cuffe, S., et al. (2022).
+Uso1 expression is dysregulated in non-small cell lung cancer. Transl. Lung Cancer Res.
+11, 1877 –1895. doi:10.21037/tlcr-22-230
+Kim, E., Park, A., Dong, S., Ahn, J., and Park, W. (2010). Global analysis of cpg
+methylation reveals epigenetic control of the radiosensitivity in lung cancer cell lines.
+Oncogene 29, 4725 –4731. doi:10.1038/onc.2010.223
+Kuhn, M. (2008). Building predictive models in r using the caret package. J. Stat.
+Softw. 28. doi:10.18637/.jss.v028.i05
+Lechpammer, M., Resnick, M. B., Sabo, E., Yakirevich, E., Greaves, W. O., Sciandra, K.
+T., et al. (2008). The diagnostic and prognostic utility of claudin expression in renal cell
+neoplasms. Mod. Pathol. 21, 1320 –1329. doi:10.1038/modpathol.2008.116
+Li, C.-X., Long, D., and Meng, Q. (2021). Promising therapeutic targets in kidney
+renal clear cell carcinoma: plxna1 and plxnb3. Cancer Biotherapy and Radiopharm. 39,
+276–290. doi:10.1089/cbr.2021.0336
+Lin, G., Zang, T., Zhang, Z., Xing, D., and Guo, Y. (2000). Expression of t cell factor
+4 in renal cell carcinoma. Zhonghua wai ke za zhi Chin. J. Surg. 38, 460 –461.
+Love, M. I., Huber, W., and Anders, S. (2014). Moderated estimation of fold change
+and dispersion for RNA-seq data with DESeq2. Genome Biol. 15, 550. doi:10.1186/
+s13059-014-0550-8
+McClelland, J. L., Rumelhart, D. E., PDP Research Group, Asanuma, C., Crick, F. H.
+C., Elman, J. L., et al. (1987) “Parallel distributed processing, ”inExplorations in the
+microstructure of cognition: psychological and biological models , 2. MIT Press.
+Mortazavi, A., Williams, B. A., McCue, K., Schaeffer, L., and Wold, B. (2008).
+Mapping and quantifying mammalian transcriptomes by rna-seq. Nat. Methods 5,
+621–628. doi:10.1038/nmeth.1226
+Piao, Y., and Ryu, K. H. (2017). “Detection of differentially expressed genes using
+feature selection approach from rna-seq, ”in2017 IEEE international conference on big
+data and smart computing (BigComp) (IEEE), 304 –308.Relli, V., Trerotola, M., Guerra, E., and Alberti, S. (2018). Distinct lung cancer
+subtypes associate to distinct drivers of tumor progression. Oncotarget 9, 35528 –35540.
+doi:10.18632/oncotarget.26217
+Robinson, M. D., McCarthy, D. J., and Smyth, G. K. (2009). edgeR: a Bioconductor
+package for differential expression analysis of digital gene expression data.
+Bioinformatics 26, 139 –140. doi:10.1093/bioinformatics/btp616
+Robinson, M. D., and Oshlack, A. (2010). A scaling normalization method for
+differential expression analysis of rna-seq data. Genome Biol. 11, R25. doi:10.1186/
+gb-2010-11-3-r25
+Rudin, C. (2019). Stop explaining black box machine learning models for high stakes
+decisions and use interpretable models instead. Nat. Mach. Intell. 1, 206 –215. doi:10.
+1038/s42256-019-0048-x
+Shinmura, K., Igarashi, H., Kato, H., Kawanishi, Y., Inoue, Y., Nakamura, S., et al.
+(2014). Clca2 as a novel immunohistochemical marker for differential diagnosis of
+squamous cell carcinoma from adenocarcinoma of the lung. Dis. Markers 2014, 619273.
+doi:10.1155/2014/619273
+Stathopoulou, K.-M., Georgakopoulos, S., Tasoulis, S., and Plagianakos, V. P. (2024).
+Investigating the overlap of mac hine learning algorithms in the ﬁnal results of rna-seq analysis
+on gene expression estimation. Health Inf. Sci. Syst. 12, 14. doi:10.1007/s13755-023-00265-4
+Su, R., Zhang, J., Liu, X., and Wei, L. (2019). Identi ﬁcation of expression signatures for
+non-small-cell lung carcinoma subtype classi ﬁcation. Bioinformatics 36, 339 –346.
+doi:10.1093/bioinformatics/btz557
+Su, S., and Shahriyari, L. (2020). Rgs5 plays a signi ﬁcant role in renal cell carcinoma.
+R. Soc. open Sci. 7, 191422. doi:10.1098/rsos.191422
+Sun, Y., Liu, C., Zhong, H., Wang, C., Xu, H., and Chen, W. (2022). Screening of
+autoantibodies as biomarkers in the serum of renal cancer patients based on human
+proteome microarray: screening of autoantibodies in renal cancer. Acta Biochimica
+Biophysica Sinica 54, 1909 –1916. doi:10.3724/abbs.2022189
+Tolkach, Y., Ellinger, J., Kremer, A., Esser, L., Müller, S. C., Stephan, C., et al. (2019).
+Apelin and apelin receptor expression in renal cell carcinoma. Br. J. cancer 120,
+633–639. doi:10.1038/s41416-019-0396-7
+Wang, L., Xi, Y., Sung, S., and Qiao, H. (2018). Rna-seq assistant: machine learning
+based methods to identify more transcriptional regulated genes. BMC genomics 19, 546.
+doi:10.1186/s12864-018-4932-2
+W a n g ,Y . ,C h e n ,Q . ,S h a o ,H . ,Z h a n g ,R . ,a n dS h e n ,H .( 2 0 2 4 ) .G e n e r a t i n gb u l kr n a - s e qg e n e
+expression data based on generative deep l earning models and utilizing it for data
+augmentation. Comput. Biol. Med. 169, 107828. doi:10.1016/j.compbiomed.2023.107828
+X u ,Z . ,H o n g ,Z . ,M a ,M . ,L i u ,X . ,C h e n ,L . ,Z h e n g ,C . ,e ta l .( 2 0 1 6 ) .R o c k 2p r o m o t e sR C C
+proliferation by decreasin gS C A R A 5e x p r e s s i o nt h r o u g h β-catenin/TCF4 signaling. Biochem.
+biophysical Res. Commun. 480, 586 –593. doi:10.1016/j.bbrc.2016.10.097
+Yao, L., Li, Y., Li, S., Wang, M., Cao, H., Xu, L., et al. (2023). Arhgap39 is a prognostic
+biomarker involved in immune in ﬁltration in breast cancer. BMC cancer 23, 440. doi:10.
+1186/s12885-023-10904-4
+Yuan, F., Lu, L., and Zou, Q. (2020). Analysis of gene expression pro ﬁles of lung
+cancer subtypes with machine learning algorithms. Biochimica Biophysica Acta (BBA)-
+Molecular Basis Dis. 1866, 165822. doi:10.1016/j.bbadis.2020.165822
+Z h a n ,C . ,Y a n ,L . ,W a n g ,L . ,S u n ,Y . ,W a n g ,X . ,L i n ,Z . ,e ta l .( 2 0 1 5 ) .I d e n t i ﬁcation of
+immunohistochemical markers for distinguishing lung adenocarcinoma from squamous cellcarcinoma. J. Thorac. Dis. 7, 1398 –1405. doi:10.3978/j.issn.2072-1439.2015.07.25
+Z h a n g ,H . ,C i s s e ,M . ,D a u p h i n ,Y .N . ,a n dL o p e z - P a z ,D .( 2 0 1 7 ) .m i x u p :b e y o n de m p i r i c a l
+risk minimization. arXiv Prepr. arXiv:1710.09412 . doi:10.48550/arXiv.1710.09412
+Zhao, W., Zhou, J., Deng, Z., Gao, Y., and Cheng, Y. (2016). SPOP promotes tumor
+progression via activation of β-catenin/TCF4 complex in clear cell renal cell carcinoma.
+Int. J. Oncol. 49, 1001 –1008. doi:10.3892/ijo.2016.3609
+Zwiener, I., Frisch, B., and Binder, H. (2014). Transforming RNA-seq data to improve
+the performance of prognostic gene signatures. PLoS One 9, e85150. doi:10.1371/
+journal.pone.0085150
+Frontiers in Genetics frontiersin.org 15Agraz et al. 10.3389/fgene.2024.1442759

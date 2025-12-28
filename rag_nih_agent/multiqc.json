@@ -1,0 +1,64 @@
+{
+  "fastqc": {
+    "samples": {
+      "sample1": {
+        "basic_statistics": {
+          "total_sequences": 20000000,
+          "filtered_sequences": 0,
+          "sequence_length": 75,
+          "percent_gc": 48.3
+        },
+        "per_base_sequence_quality": {
+          "mean_quality": 35.6,
+          "min_quality": 25,
+          "max_quality": 40
+        },
+        "adapter_content": {
+          "percent": 0.2,
+          "status": "PASS"
+        }
+      },
+      "sample2": {
+        "basic_statistics": {
+          "total_sequences": 18000000,
+          "filtered_sequences": 1000,
+          "sequence_length": 75,
+          "percent_gc": 47.8
+        },
+        "per_base_sequence_quality": {
+          "mean_quality": 34.8,
+          "min_quality": 23,
+          "max_quality": 40
+        },
+        "adapter_content": {
+          "percent": 0.5,
+          "status": "WARN"
+        }
+      }
+    }
+  },
+  "star": {
+    "samples": {
+      "sample1": {
+        "uniquely_mapped_reads_percent": 92.3,
+        "multi_mapped_reads_percent": 5.5,
+        "unmapped_reads_percent": 2.2
+      },
+      "sample2": {
+        "uniquely_mapped_reads_percent": 90.1,
+        "multi_mapped_reads_percent": 7.0,
+        "unmapped_reads_percent": 2.9
+      }
+    }
+  },
+  "summary": {
+    "samples": {
+      "sample1": {
+        "qc_status": "PASS"
+      },
+      "sample2": {
+        "qc_status": "WARN"
+      }
+    }
+  }
+}
