@@ -52,8 +52,6 @@ def process_prompt(prompt):
 def run_database_query(queries):
     returned_values = []
     for query in queries:
-        if "GO_Name" in query: 
-            continue
         if "," not in query:
             st.write("Found query with no comma")
             continue
