@@ -6,7 +6,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, TextGenerationPipe
 SUPABASE_KEY = "sb_secret_TXwlQfw6vFpsM_8Zn8vRVA_PPPN0otO"
 SUPABASE_URL = "https://cvlgiurxfqauzxbdomrv.supabase.co"
 
-model_name = "DavidAU/Llama-3.3-8B-Instruct-Thinking-Claude-Haiku-4.5-High-Reasoning-1700x"
+model_name = "verseAI/databricks-dolly-v2-3b"
 
 # Load model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name)
