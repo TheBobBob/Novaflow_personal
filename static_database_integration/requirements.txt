@@ -2,4 +2,4 @@ streamlit
 groq
 supabase
 transformers
-pytorch
+torch
